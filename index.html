@@ -48,7 +48,7 @@
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
 
         <header class="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-white text-center">BioZone - Analisador Bioclimático Interativo</h1>
+            <h1 class="text-3xl md:text-4xl font-bold text-white text-center">Analisador Bioclimático Interativo</h1>
             <p class="text-gray-400 mt-2 text-center">Visualize dados de arquivos EPW na Carta de Givoni para análise de estratégias de projeto passivo.</p>
         </header>
 
@@ -288,7 +288,7 @@
                     analyzeButton.disabled = false;
                     fileInput.disabled = false;
                 };
-                reader.readAsText(file);
+                reader.readAsText(file, "UTF-8");
             }
 
             function calculateAbsoluteHumidity(temp, rh) {
@@ -332,7 +332,11 @@
                     const relHumidity = parseFloat(columns[8]);
                     
                     if (!isNaN(dryBulbTemp) && !isNaN(relHumidity)) {
-                        const absHumidity = calculateAbsoluteHumidity(dryBulbTemp, relHumidity);
+                        let absHumidity = calculateAbsoluteHumidity(dryBulbTemp, relHumidity);
+                        const maxHumidityAtTemp = calculateAbsoluteHumidity(dryBulbTemp, 100);
+                        if (absHumidity > maxHumidityAtTemp) {
+                            absHumidity = maxHumidityAtTemp;
+                        }
                         parsedData.push({ month, day, hour, temp: dryBulbTemp, rh: relHumidity, ah: absHumidity });
                     }
                 }
@@ -350,7 +354,7 @@
                         color: 'rgba(148, 0, 211, 0.4)', label: '2-4 Vent. e Massa Térmica', visible: false, labelPosition: {x: 30.5, y: 11}
                     },
                     zone2_ventilation: {
-                        points:[ {x: 18, y: 10.5}, {x: 20, y: 12.125}, {x: 20, y: calculateAbsoluteHumidity(20, 100)}, {x: 25.4, y: 20.5}, {x: 30, y: 20.5}, {x: 32, y: 15}, {x: 32, y: 4}, {x: 29, y: 4}, {x: 29, y: 12.5}, {x: 27, y: 17}, {x: 26, y: 17}, ],
+                        points:[ {x: 18, y: 10.5}, {x: 20, y: 12.125}, {x: 20, y: calculateAbsoluteHumidity(20, 100)}, {x: 25, y:20.1}, {x: 25.4, y: 20.5}, {x: 30, y: 20.5}, {x: 32, y: 15}, {x: 32, y: 4}, {x: 29, y: 4}, {x: 29, y: 12.5}, {x: 27, y: 17}, {x: 26, y: 17}, ],
                         color: 'rgba(135, 206, 250, 0.4)', label: '2 - Zona de Ventilação', visible: false, labelPosition: {x: 27, y: 18.5}
                     },
                     zone3_evaporativeCooling: {
@@ -489,10 +493,10 @@
                 const recommendations = {
                     zone2_ventilation: { name: "Ventilação Natural", text: "Medidas como ventilação cruzada (janelas em faces opostas), aberturas permanentes e o efeito chaminé para induzir a circulação do ar são altamente recomendadas." },
                     zone3_evaporativeCooling: { name: "Resfriamento Evaporativo", text: "O uso de fontes, espelhos d'água próximos às aberturas, pátios internos com vegetação e o uso de materiais porosos no exterior pode reduzir significativamente a temperatura do ar." },
-                    zone4_thermalMassCooling: { name: "Massa Térmica para Resfriamento", text: "É uma estratégia muito eficaz. Materiais como concreto, tijolo maciço ou pedra podem absorver o calor durante o dia e liberá-lo durante a noite, quando a ventilação é usada para resfriar a estrutura." },
+                    zone4_thermalMassCooling: { name: "Massa Térmica para Resfriamento", text: "Materiais como concreto, tijolo maciço ou pedra podem absorver o calor durante o dia e liberá-lo para o exterior durante a noite." },
                     zone2_4_intersection: { name: "Ventilação e Massa Térmica", text: "A combinação de alta inércia térmica com ventilação noturna é a estratégia mais indicada. Use materiais como concreto, tijolo ou pedra para absorver calor durante o dia, e promova ventilação intensa durante a noite para resfriar a estrutura." },
-                    zone7_thermalMassHeating: { name: "Massa Térmica para Aquecimento", text: "É uma estratégia viável. Materiais de alta inércia térmica expostos à radiação solar podem armazenar calor e liberá-lo lentamente para o interior durante a noite." },
-                    zone8_passiveSolarHeating: { name: "Aquecimento Solar Passivo", text: "É uma estratégia chave. Recomenda-se o uso de aberturas de vidro voltadas para a orientação solar favorável (Norte no Hemisfério Sul) para ganho de calor direto, além de estufas e paredes de Trombe." }
+                    zone7_thermalMassHeating: { name: "Massa Térmica para Aquecimento", text: "Materiais de alta inércia térmica expostos à radiação solar podem armazenar calor e liberá-lo lentamente para aquecer o interior durante a noite." },
+                    zone8_passiveSolarHeating: { name: "Aquecimento Solar Passivo", text: "É uma estratégia chave. Recomenda-se o uso de aberturas de vidro voltadas para a orientação solar favorável para ganho de calor direto, além de estufas e paredes de Trombe." }
                 };
 
                 const getEfficacyLabel = (percent) => {
@@ -638,7 +642,7 @@
                     for (let temp = -10; temp <= 50; temp += 1) { 
                         curvePoints.push({ x: temp, y: calculateAbsoluteHumidity(temp, rh) });
                     }
-                    return { type: 'line', label: `${rh}%`, data: curvePoints, borderColor: 'rgba(200, 200, 200, 0.5)', borderWidth: 1, borderDash: [2, 2], pointRadius: 0, fill: false, tension: 0.4 };
+                    return { type: 'line', label: `${rh}%`, data: curvePoints, borderColor: 'rgba(200, 200, 200, 0.5)', borderWidth: 1, borderDash: [2, 2], pointRadius: 0, fill: false, tension: 0 };
                 });
 
                 const processedChartData = data.map(d => {
